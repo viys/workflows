@@ -9,9 +9,9 @@ function Show-Menu {
     Write-Host "请选择要执行的命令：`n" -ForegroundColor Yellow
     Write-Host "1. 创建项目 (create-project)"
     Write-Host "2. 设置目标芯片 (set-target)"
-    Write-Host "3. 编译项目 (build)"
-    Write-Host "4. 配置项目 (menuconfig)"
-    Write-Host "5. 打开ESP IDF容器终端 (bash)"
+    Write-Host "3. 配置项目 (menuconfig)"
+    Write-Host "4. 编译项目 (build)"
+    Write-Host "5. 打开容器终端 (bash)"
     Write-Host "6. 启动串口服务器 (esp_rfc2217_server)"
     Write-Host "7. 烧录程序 (flash)"
     Write-Host "8. 串口监视器 (monitor)"
@@ -30,11 +30,11 @@ function Show-Help {
     Write-Host "2. 设置目标芯片：通过 set-target 设置 ESP-IDF 项目的目标芯片。"
     Write-Host "该命令允许你指定 ESP-IDF 项目编译时使用的目标芯片类型，如 esp32s3、esp32s2 等。`n"
 
-    Write-Host "3. 编译项目：通过 build 命令编译指定的 ESP-IDF 项目。"
-    Write-Host "该命令将会开始编译项目，生成固件文件，用于后续烧录到目标设备。`n"
-
-    Write-Host "4. 配置项目：通过 menuconfig 打开 ESP-IDF 项目的配置菜单。"
+    Write-Host "3. 配置项目：通过 menuconfig 打开 ESP-IDF 项目的配置菜单。"
     Write-Host "该命令启动一个图形化的配置界面，你可以在这里配置项目的各种选项。`n"
+
+    Write-Host "4. 编译项目：通过 build 命令编译指定的 ESP-IDF 项目。"
+    Write-Host "该命令将会开始编译项目，生成固件文件，用于后续烧录到目标设备。`n"
 
     Write-Host "5. 打开ESP IDF容器终端：通过 bash 打开 ESP-IDF 容器的终端。"
     Write-Host "该命令打开一个交互式的终端，你可以直接在容器内执行命令。`n"
@@ -129,7 +129,7 @@ function Run-Command {
         2 {
             $projPath = Select-Project
             if ($projPath) {
-                $target = Read-Host "请输入目标芯片名称（如：esp32）"
+                $target = Read-Host "请输入目标芯片名称（如：esp32s3）"
                 docker-compose run --rm -w $projPath esp-idf idf.py set-target $target
             }
             exit
@@ -137,14 +137,14 @@ function Run-Command {
         3 {
             $projPath = Select-Project
             if ($projPath) {
-                docker-compose run --rm -w $projPath esp-idf idf.py build
+                docker-compose run --rm -w $projPath esp-idf idf.py menuconfig
             }
             exit
         }
         4 {
             $projPath = Select-Project
             if ($projPath) {
-                docker-compose run --rm -w $projPath esp-idf idf.py menuconfig
+                docker-compose run --rm -w $projPath esp-idf idf.py build
             }
             exit
         }
