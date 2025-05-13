@@ -1,5 +1,3 @@
-# esp-idf-menu.ps1
-
 function Show-Menu {
     Write-Host "请选择要执行的命令："
     Write-Host "1. 创建项目 (create-project)"
@@ -13,11 +11,41 @@ function Show-Menu {
     Write-Host "0. 退出"
 }
 
-# 检查并安装 esptool
+# ✅ 检测并选择 ESP-IDF 项目
+function Select-Project {
+    $projectRoot = Join-Path $PSScriptRoot "project"
+    if (-Not (Test-Path $projectRoot)) {
+        Write-Warning "未找到 project 文件夹：$projectRoot"
+        return $null
+    }
+
+    $dirs = Get-ChildItem -Path $projectRoot -Directory | Where-Object {
+        Test-Path (Join-Path $_.FullName "CMakeLists.txt")
+    }
+
+    if ($dirs.Count -eq 0) {
+        Write-Warning "未在 project 文件夹中找到任何 ESP-IDF 项目（含 CMakeLists.txt 的文件夹）"
+        return $null
+    }
+
+    Write-Host "`n可用项目列表："
+    for ($i = 0; $i -lt $dirs.Count; $i++) {
+        Write-Host "$($i + 1). $($dirs[$i].Name)"
+    }
+
+    $index = Read-Host "请选择项目 (输入编号)"
+    if ($index -match '^\d+$' -and $index -ge 1 -and $index -le $dirs.Count) {
+        return "/project/$($dirs[$index - 1].Name)"
+    } else {
+        Write-Warning "输入无效。"
+        return $null
+    }
+}
+
 function Ensure-Esptool {
     $toolPath = "scripts\esptool-win64"
     if (-Not (Test-Path $toolPath)) {
-        Write-Host "未找到 $toolPath，正在运行 install_esptool.py 以安装所需工具..."
+        Write-Host "未找到 $toolPath，正在运行 install_esptool.py 安装..."
         $installScript = "scripts\install_esptool.py"
         if (Test-Path $installScript) {
             python $installScript
@@ -45,16 +73,25 @@ function Run-Command {
             exit
         }
         2 {
-            $target = Read-Host "请输入目标芯片名称（如：esp32）"
-            docker-compose run --rm esp-idf idf.py set-target $target
+            $projPath = Select-Project
+            if ($projPath) {
+                $target = Read-Host "请输入目标芯片名称（如：esp32）"
+                docker-compose run --rm -w $projPath esp-idf idf.py set-target $target
+            }
             exit
         }
         3 {
-            docker-compose run --rm esp-idf idf.py build
+            $projPath = Select-Project
+            if ($projPath) {
+                docker-compose run --rm -w $projPath esp-idf idf.py build
+            }
             exit
         }
         4 {
-            docker-compose run --rm esp-idf idf.py menuconfig
+            $projPath = Select-Project
+            if ($projPath) {
+                docker-compose run --rm -w $projPath esp-idf idf.py menuconfig
+            }
             exit
         }
         5 {
@@ -62,7 +99,6 @@ function Run-Command {
             exit
         }
         6 {
-            # 询问串口端口
             $port = Read-Host "请输入目标串口设备名称（如：COM3）"
             if (Ensure-Esptool) {
                 Push-Location "scripts\esptool-win64"
@@ -72,11 +108,17 @@ function Run-Command {
             }
         }
         7 {
-            docker-compose run --rm esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" flash
+            $projPath = Select-Project
+            if ($projPath) {
+                docker-compose run --rm -w $projPath esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" flash
+            }
             exit
         }
         8 {
-            docker-compose run --rm esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" monitor
+            $projPath = Select-Project
+            if ($projPath) {
+                docker-compose run --rm -w $projPath esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" monitor
+            }
             exit
         }
         0 {
@@ -92,8 +134,6 @@ function Run-Command {
 while ($true) {
     Show-Menu
     $selection = Read-Host "请输入数字选择（如 1-8 或 0 退出）"
-    
-    # 确保选择是有效数字
     if ($selection -match '^\d+$') {
         $selection = [int]$selection
         Run-Command -Choice $selection

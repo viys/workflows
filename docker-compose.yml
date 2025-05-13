@@ -4,9 +4,9 @@ services:
   esp-idf:
     image: espressif/idf:v5.4.1
     container_name: esp-idf-builder
-    working_dir: /project
     volumes:
-      - .:/project
+      - ./project:/project
+    working_dir: /project
     environment:
       - HOME=/tmp
       - IDF_GIT_SAFE_DIR=/project

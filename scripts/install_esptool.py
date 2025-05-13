@@ -18,6 +18,7 @@ def get_esptool_download_url():
     system = platform.system()
     # 示例链接，这些链接你需要根据你项目中实际可用的 esptool 下载地址更新
     urls = {
+        # 此安装脚本只推荐 Windows 使用，Linux 和 MacOS 推荐使用 pip install esptool
         "Windows": "https://github.com/espressif/esptool/releases/download/v4.8.1/esptool-v4.8.1-win64.zip",
         "Linux":   "https://github.com/espressif/esptool/releases/download/v4.8.1/esptool-v4.8.1-linux-amd64.zip",
         "Darwin":  "https://github.com/espressif/esptool/releases/download/v4.8.1/esptool-v4.8.1-macos.zip"
