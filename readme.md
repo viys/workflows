@@ -41,7 +41,7 @@ docker pull espressif/idf:v5.4.1
        container_name: esp-idf-builder
        working_dir: /project
        volumes:
-         - ./project:/project
+         - .:/project
        environment:
          - HOME=/tmp
          - IDF_GIT_SAFE_DIR=/project
@@ -49,7 +49,7 @@ docker pull espressif/idf:v5.4.1
        stdin_open: true
    ```
 
-   该配置会将主机上的 `./project` 目录挂载到 Docker 容器中的 `/project` 目录，并确保容器内的环境适合 ESP32 项目的编译。
+   该配置会将主机上的 `.` 目录挂载到 Docker 容器中的 `/project` 目录，并确保容器内的环境适合 ESP32 项目的编译。
 
 ## PowerShell 脚本 (`esp-idf-menu.ps1`)
 
