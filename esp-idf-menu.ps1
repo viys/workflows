@@ -54,7 +54,6 @@ function Show-Help {
     Write-Host "===============================" -ForegroundColor Yellow
 }
 
-
 function Show-Loading {
     $spinner = @('|', '/', '-', '\')
     $index = 0
@@ -63,36 +62,6 @@ function Show-Loading {
         Start-Sleep -Milliseconds 100
         Write-Host -NoNewline "`b"
         $index = ($index + 1) % $spinner.Length
-    }
-}
-
-function Select-Project {
-    $projectRoot = Join-Path $PSScriptRoot "project"
-    if (-Not (Test-Path $projectRoot)) {
-        Write-Warning "未找到 project 文件夹：$projectRoot"
-        return $null
-    }
-
-    $dirs = Get-ChildItem -Path $projectRoot -Directory | Where-Object {
-        Test-Path (Join-Path $_.FullName "CMakeLists.txt")
-    }
-
-    if ($dirs.Count -eq 0) {
-        Write-Warning "未在 project 文件夹中找到任何 ESP-IDF 项目（含 CMakeLists.txt 的文件夹）"
-        return $null
-    }
-
-    Write-Host "`n可用项目列表：" -ForegroundColor Cyan
-    for ($i = 0; $i -lt $dirs.Count; $i++) {
-        Write-Host "$($i + 1). $($dirs[$i].Name)" -ForegroundColor Green
-    }
-
-    $index = Read-Host "请选择项目 (输入编号)"
-    if ($index -match '^\d+$' -and $index -ge 1 -and $index -le $dirs.Count) {
-        return "/project/$($dirs[$index - 1].Name)"
-    } else {
-        Write-Warning "输入无效。" -ForegroundColor Red
-        return $null
     }
 }
 
@@ -124,28 +93,26 @@ function Run-Command {
         1 {
             $proj = Read-Host "请输入目标项目名称"
             docker-compose run --rm esp-idf idf.py create-project $proj
+            $projPath = Join-Path -Path (Get-Location) -ChildPath $proj
+            $parentPath = Split-Path -Path $projPath -Parent
+            Get-ChildItem -Path $projPath -Force | ForEach-Object {
+                $destination = Join-Path $parentPath $_.Name
+                Move-Item -Path $_.FullName -Destination $destination -Force
+            }
+            Remove-Item -Path $projPath -Force
             exit
         }
         2 {
-            $projPath = Select-Project
-            if ($projPath) {
-                $target = Read-Host "请输入目标芯片名称（如：esp32s3）"
-                docker-compose run --rm -w $projPath esp-idf idf.py set-target $target
-            }
+            $target = Read-Host "请输入目标芯片名称（如：esp32s3）"
+            docker-compose run --rm  esp-idf idf.py set-target $target
             exit
         }
         3 {
-            $projPath = Select-Project
-            if ($projPath) {
-                docker-compose run --rm -w $projPath esp-idf idf.py menuconfig
-            }
+            docker-compose run --rm  esp-idf idf.py menuconfig
             exit
         }
         4 {
-            $projPath = Select-Project
-            if ($projPath) {
-                docker-compose run --rm -w $projPath esp-idf idf.py build
-            }
+            docker-compose run --rm  esp-idf idf.py build
             exit
         }
         5 {
@@ -162,16 +129,14 @@ function Run-Command {
             }
         }
         7 {
-            $projPath = Select-Project
             if ($projPath) {
-                docker-compose run --rm -w $projPath esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" flash
+                docker-compose run --rm esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" flash
             }
             exit
         }
         8 {
-            $projPath = Select-Project
             if ($projPath) {
-                docker-compose run --rm -w $projPath esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" monitor
+                docker-compose run --rm  esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" monitor
             }
             exit
         }
