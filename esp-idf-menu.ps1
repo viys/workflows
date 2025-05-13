@@ -1,5 +1,12 @@
+function Show-Header {
+    Write-Host "===============================" -ForegroundColor Cyan
+    Write-Host "         ESP-IDF 开发工具         " -ForegroundColor Cyan
+    Write-Host "===============================" -ForegroundColor Cyan
+}
+
 function Show-Menu {
-    Write-Host "请选择要执行的命令："
+    Show-Header
+    Write-Host "请选择要执行的命令：`n" -ForegroundColor Yellow
     Write-Host "1. 创建项目 (create-project)"
     Write-Host "2. 设置目标芯片 (set-target)"
     Write-Host "3. 编译项目 (build)"
@@ -8,10 +15,57 @@ function Show-Menu {
     Write-Host "6. 启动串口服务器 (esp_rfc2217_server)"
     Write-Host "7. 烧录程序 (flash)"
     Write-Host "8. 串口监视器 (monitor)"
-    Write-Host "0. 退出"
+    Write-Host "9. 脚本使用帮助 (help)"
+    Write-Host "0. 退出`n" -ForegroundColor Red
 }
 
-# ✅ 检测并选择 ESP-IDF 项目
+function Show-Help {
+    Write-Host "`n===============================" -ForegroundColor Yellow
+    Write-Host "      ESP-IDF 脚本使用帮助      " -ForegroundColor Yellow
+    Write-Host "===============================" -ForegroundColor Yellow
+    Write-Host "`n1. 创建项目：使用 create-project 创建新的 ESP-IDF 项目。"
+    Write-Host "该命令将会创建一个新的 ESP-IDF 项目目录，并生成基础的项目文件结构。"
+    Write-Host "你需要输入项目名称，脚本将会为你自动生成该项目的基础框架。`n"
+
+    Write-Host "2. 设置目标芯片：通过 set-target 设置 ESP-IDF 项目的目标芯片。"
+    Write-Host "该命令允许你指定 ESP-IDF 项目编译时使用的目标芯片类型，如 esp32s3、esp32s2 等。`n"
+
+    Write-Host "3. 编译项目：通过 build 命令编译指定的 ESP-IDF 项目。"
+    Write-Host "该命令将会开始编译项目，生成固件文件，用于后续烧录到目标设备。`n"
+
+    Write-Host "4. 配置项目：通过 menuconfig 打开 ESP-IDF 项目的配置菜单。"
+    Write-Host "该命令启动一个图形化的配置界面，你可以在这里配置项目的各种选项。`n"
+
+    Write-Host "5. 打开ESP IDF容器终端：通过 bash 打开 ESP-IDF 容器的终端。"
+    Write-Host "该命令打开一个交互式的终端，你可以直接在容器内执行命令。`n"
+
+    Write-Host "6. 启动串口服务器：通过 esp_rfc2217_server 启动串口服务器，提供与目标设备的串口通信。"
+    Write-Host "该命令将启动一个 RFC2217 串口服务器，用于通过网络与目标设备进行串口通信。`n"
+
+    Write-Host "7. 烧录程序：通过 flash 命令将编译好的固件烧录到目标设备。"
+    Write-Host "该命令将使用串口或者网络连接，将生成的固件烧录到目标设备。`n"
+
+    Write-Host "8. 串口监视器：通过 monitor 命令连接到目标设备的串口并监视其输出。"
+    Write-Host "该命令将打开一个串口监视器，实时显示目标设备的输出信息。`n"
+
+    Write-Host "0. 退出脚本：退出当前脚本的执行。"
+    Write-Host "该命令将会终止脚本并退出。`n"
+
+    Write-Host "===============================" -ForegroundColor Yellow
+}
+
+
+function Show-Loading {
+    $spinner = @('|', '/', '-', '\')
+    $index = 0
+    while ($true) {
+        Write-Host -NoNewline "$($spinner[$index])"
+        Start-Sleep -Milliseconds 100
+        Write-Host -NoNewline "`b"
+        $index = ($index + 1) % $spinner.Length
+    }
+}
+
 function Select-Project {
     $projectRoot = Join-Path $PSScriptRoot "project"
     if (-Not (Test-Path $projectRoot)) {
@@ -28,16 +82,16 @@ function Select-Project {
         return $null
     }
 
-    Write-Host "`n可用项目列表："
+    Write-Host "`n可用项目列表：" -ForegroundColor Cyan
     for ($i = 0; $i -lt $dirs.Count; $i++) {
-        Write-Host "$($i + 1). $($dirs[$i].Name)"
+        Write-Host "$($i + 1). $($dirs[$i].Name)" -ForegroundColor Green
     }
 
     $index = Read-Host "请选择项目 (输入编号)"
     if ($index -match '^\d+$' -and $index -ge 1 -and $index -le $dirs.Count) {
         return "/project/$($dirs[$index - 1].Name)"
     } else {
-        Write-Warning "输入无效。"
+        Write-Warning "输入无效。" -ForegroundColor Red
         return $null
     }
 }
@@ -45,16 +99,16 @@ function Select-Project {
 function Ensure-Esptool {
     $toolPath = "scripts\esptool-win64"
     if (-Not (Test-Path $toolPath)) {
-        Write-Host "未找到 $toolPath，正在运行 install_esptool.py 安装..."
+        Write-Host "未找到 $toolPath，正在运行 install_esptool.py 安装..." -ForegroundColor Yellow
         $installScript = "scripts\install_esptool.py"
         if (Test-Path $installScript) {
-            python $installScript
+            python $installScript | Write-Host
             if (-Not (Test-Path $toolPath)) {
-                Write-Error "安装失败，目录仍然不存在：$toolPath"
+                Write-Error "安装失败，目录仍然不存在：$toolPath" -ForegroundColor Red
                 return $false
             }
         } else {
-            Write-Error "安装脚本未找到：$installScript"
+            Write-Error "安装脚本未找到：$installScript" -ForegroundColor Red
             return $false
         }
     }
@@ -121,12 +175,16 @@ function Run-Command {
             }
             exit
         }
+        9 {
+            Show-Help
+            exit
+        }
         0 {
-            Write-Host "退出。"
+            Write-Host "退出。" -ForegroundColor Red
             exit
         }
         Default {
-            Write-Host "无效选择，请重试。"
+            Write-Host "无效选择，请重试。" -ForegroundColor Red
         }
     }
 }
@@ -138,6 +196,6 @@ while ($true) {
         $selection = [int]$selection
         Run-Command -Choice $selection
     } else {
-        Write-Host "无效输入，请输入有效数字（0-8）。"
+        Write-Host "无效输入，请输入有效数字（0-9）。" -ForegroundColor Red
     }
 }
