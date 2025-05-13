@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  esp-idf:
+    image: espressif/idf:v5.4.1
+    container_name: esp-idf-builder
+    working_dir: /project
+    volumes:
+      - .:/project
+    environment:
+      - HOME=/tmp
+      - IDF_GIT_SAFE_DIR=/project
+    tty: true
+    stdin_open: true
