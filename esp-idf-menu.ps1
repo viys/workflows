@@ -129,15 +129,12 @@ function Run-Command {
             }
         }
         7 {
-            if ($projPath) {
-                docker-compose run --rm esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" flash
-            }
+
+            docker-compose run --rm esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" flash
             exit
         }
         8 {
-            if ($projPath) {
-                docker-compose run --rm  esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" monitor
-            }
+            docker-compose run --rm  esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" monitor
             exit
         }
         9 {
