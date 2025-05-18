@@ -1,0 +1,69 @@
+name: Build and Release ESP32 Firmware (Docker)
+
+on:
+  push:
+    # branches: [workflows]
+    tags:
+      - 'v*'                # 只有推送 tag（如 v1.0.0）才会自动触发
+    branches:
+      - release             # ✅ 仅当 tag 是在 release 分支上打的，才触发
+  workflow_dispatch:        # 手动触发
+
+# on:
+#   push:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 1. 拉取源码
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. 启动构建容器
+      - name: Build firmware using docker-compose
+        run: |
+          docker compose run --rm esp-idf bash -c "idf.py set-target esp32c3 && idf.py build"
+
+      # 2.5 重命名构建产物
+      - name: Build firmware using docker-compose
+        run: |
+          VERSION=${GITHUB_REF##*/}
+          docker compose run --rm esp-idf bash -c "\
+            mv build/*.bin build/esp32c3-${VERSION}.bin && \
+            mv build/*.elf build/esp32c3-${VERSION}.elf && \
+            mv build/*.map build/esp32c3-${VERSION}.map"
+
+      # 3. 上传构建产物
+      - name: Upload firmware artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: esp32-firmware
+          path: |
+            build/*.bin
+            build/*.elf
+            build/*.map
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+
+    steps:
+      # 4. 下载构建产物
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: esp32-firmware
+
+      # 5. 发布 GitHub Release（需要 tag 或手动）
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: |
+            *.bin
+            *.elf
+            *.map
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
