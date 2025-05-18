@@ -104,15 +104,15 @@ function Run-Command {
         }
         2 {
             $target = Read-Host "请输入目标芯片名称（如：esp32s3）"
-            docker-compose run --rm  esp-idf idf.py set-target $target
+            docker-compose run --rm esp-idf idf.py set-target $target
             exit
         }
         3 {
-            docker-compose run --rm  esp-idf idf.py menuconfig
+            docker-compose run --rm esp-idf idf.py menuconfig
             exit
         }
         4 {
-            docker-compose run --rm  esp-idf idf.py build
+            docker-compose run --rm esp-idf idf.py build
             exit
         }
         5 {
@@ -134,7 +134,7 @@ function Run-Command {
             exit
         }
         8 {
-            docker-compose run --rm  esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" monitor
+            docker-compose run --rm esp-idf idf.py --port "rfc2217://host.docker.internal:4000?ign_set_control" monitor
             exit
         }
         9 {
