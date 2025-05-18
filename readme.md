@@ -2,6 +2,23 @@
 
 本指南介绍了如何使用 Docker 设置 ESP32 开发环境，并提供了一些 PowerShell 和 Bash 脚本来简化开发流程。这些脚本帮助您创建项目、设置目标芯片、编译、烧录和监视 ESP32 项目。
 
+## 目录
+
+- [前提条件](#前提条件)
+- [Docker 安装](#docker-安装)
+- [拉取 ESP-IDF Docker 镜像](#拉取-esp-idf-docker-镜像)
+- [Docker Compose 设置](#docker-compose-设置)
+- [PowerShell 脚本 (esp-idf-menu.ps1)](#powershell-脚本-esp-idf-menups1)
+  - [使用说明](#使用说明)
+  - [使用步骤](#使用步骤)
+  - [注意事项](#注意事项)
+- [Bash 脚本 (esp-idf-menu.sh)](#bash-脚本-esp-idf-menush)
+- [GitHub Actions 自动构建与发布](#github-actions-自动构建与发布githubworkflowsesp32yml)
+  - [自动构建与发布流程](#自动构建与发布流程)
+  - [更换目标芯片](#更换目标芯片)
+  - [注意事项](#注意事项)
+- [总结](#总结)
+
 ## 前提条件
 
 - 安装 **Docker**。
@@ -97,8 +114,6 @@ docker pull espressif/idf:v5.4.1
    ```
 
 3. 脚本会显示一个菜单，您可以选择执行相应的操作。
-
-
 
 ## GitHub Actions 自动构建与发布（`.github/workflows/esp32.yml`）
 
